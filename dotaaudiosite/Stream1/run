@@ -1,0 +1,2 @@
+livestreamer -a "{filename} --sout '#transcode{{vcodec=none,acodec=vorb,ab=128,channels=2}}:duplicate{{dst=std{{access=shout,mux=ogg,dst=source:827rzuwa59@dotaaudio.com:8000/DotaStream1Ogg}}}}'" twitch.tv/dota2ti_1 worst
+

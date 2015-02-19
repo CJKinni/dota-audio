@@ -1,0 +1,1 @@
+    livestreamer -a "-I 'dummy' {filename} --no-sout-shout-mp3 --sout '#transcode{{vcodec=dummy,acodec=opus,ab=64,channels=2}}:std{{access=shout,mux=raw,dst=source:PASSWORD@dotaaudio.com:8000/DotaMultiOggOpus}}' 'vlc://quit'" twitch.tv/dota2ti worst
