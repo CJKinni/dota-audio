@@ -1,30 +1,69 @@
 
-I frequently find myself comparing issues in the legal system with issues in the law.  To a large extent, statutory law -- the laws written down by your congressional representatives -- faces many of the same issues code does.  It needs to be clear, it must do what the drafters intend for it to do, and it must be concise.
+### An Introduction
 
-What follows are a few thoughts, informed by the last two years.  I expect to write more about the intersection of programming and the law in the coming months.
+I love little projects that push me to try something unfamiliar.  It's taken me years to understand the right scope for a small project -- I frequently try to do too little or too much, but that's a post of its own.  These projects can be anything from building an App, to a Game, to concocting some Sour Dough Starter.  Today I'd like to reflect on a project I worked on during July, 2014 -- [DotaAudio][DA].
 
-### Clear
+This Summer, I began my descent into [DotA][DOTA] -- a five on five competitive strategy game for the PC and Mac.  In July, DotA had a tournament with the single largest prize pool in competitive gaming -- over ten million dollars.  The tournament was called 'The International 4,' and was watched by millions of viewers, mainly through Twitch.tv, YouTube Live, and ESPN3.
 
-Programing languages need to be free from ambiguity.  Good legislation also needs to be free from any ambiguity.  Fortunately for programmers, programming languages have [specifications](http://perl6.org/specification/) and test suites which ensure any compiler or interpreter should produce the same output given a common input.  Unfortunately, spoken languages were built over thousands of years, and have a variety of nuanced phrases which make defining meaning difficult.
+In the days before the tournament, I saw a number of posters complaining about the lack of an audio only stream for individuals on mobile devices, or people with low bandwidth.  I investigated, and learned that Twitch.tv's iOS app included an audio-only option, but no such option existed for the Android app.  With two days to make something happen, I decided to try and set up a way for people to listen to all the action.
 
-The language of the law has gone through a variety of transformations over the years.  Notably, the recent shift in the past thirty-or-so years of preferring writing devoid of legalese.
+### The Preparation
 
-There are a few systems lawyers employ to make their writing as clear as possible.  Definitions sections make the interpretation of statutes and contracts easier by clarifying or narrowing the definitions of words.  We also use 'canons of construction' to interpret ambiguous language.
+In 2001 or 2002, I'd experimented with the idea of creating an online radio station.  I had spare linux computers, and had installed a Shoutcast Server on it.  I didn't have the sticktoitiveness to actually produce content, and left the project in shambles -- many of my projects are left in my always-growing 'development' folder, a graveyard for failed experiments.
 
-These systems tend to assist in creating unambiguous language, but they have their limits.  What good, for example, is a canon of construction if the drafter was unaware of the canon.  While these canons attempt to replicate the common usage of the English language, they tend to represent a subset of the English language.  For example, the 'presumption of consistent usage & meaningful variation' may be at odds with a writer who uses multiple synonymous nouns to refer to one concept with the intent to keep the reader interested (rather than differentiate the nouns.)
+Ten years later, that experience pointed me in a reasonable direction.  I remembered there was Shoutcast, Icecast, and a variety of other solutions.  I also knew of some active online radio stations like [Alpha Geek Radio][AGR].  I looked around at all of those options, and it seemed like Icecast 2 would be my best bet for a reliable server.
 
-### Intentional
+I also considered subscribing to [mixlr][MIXLR], a paid service that provided an easy way to broadcast voice and music tracks to its users and the public.  This option seemed like a good last resort, but I knew I'd learn far less.  I kept mixlr in my back pocket.
 
-While clarity is something programming excels at over legal drafting, both programers and drafters must face the problem of ensuring their intentions are manifested in their writings.
+With Icecast2 as a place to host audio, and mixlr as a backup, all I needed was a way for someone to find the server.   I chose to host with a free [heroku][HEROKU] dyno.  Heroku offers a single web server, and with a bit of difficulty, I set up a static site which linked to the IceCast server.
 
-Here, legislators may have a leg up on coding.  The Judiciary, when faced with an ambiguous word or phrase, may consult the legislative history of a given law.  The ambiguity may be clarified by looking at the purpose of the law.  However, this piece of statutory interpretation -- looking at the non-binding history of a law --  has its proponents and opponents.  The opponents tend to have an idealistic view about the ability for language to be unambiguous.  The proponents have the ability to rewrite or write-in judge made law, with the potential of circumventing the American tripartite system of governance.
+### The Problems
 
-Programmers, knowing that there will only be a machine analyzing their code, must ensure their code does what it is intended to do.  The testing methodologies incorporated into the workflows of many programmers lives could be an interesting point of comparison to the current drafting process in Congress.
+I had a single audio track up in no time.  The problem:  There were actually four different events going on at once, and I didn't want to have four different computers listening to them all.  At this point, I was actually having a computer open the stream in a browser, and pipe that audio back out to my IceCast Server.  This was far from ideal.
 
-### Concise
+I also soon found out that some Android devices are unable to play mp3 from the browser and require an alternative codec.  I quickly set up a second stream from the computer, which sent an ogg vorbis stream to the server.
 
-This is the biggie, and it's what prompted me to write down some of these thoughts tonight.  I was listening to a professor shrug off the broad granting of power Congress gives to administrative agencies.  Agencies are formed through statutes granting them the power to perform a variety of governmental actions.  They're formed for a variety of reasons, but they can only do what the congress enables them to do within the statute.  Be it laziness, uncertainty, or future-proofing the statutes, agencies tend to be granted a great deal of power -- almost always more than is absolutely necessary to run that agency.  There is academic interest in the problems with broad grants of power, but no sign of real change.
+At one point, I had two streams going with two of the computers in my apartment, and I realized I needed a better solution.  I needed to capture Twitch.TV's audio and redirect it to IceCast.
 
-Reflecting on my own coding hobby, I too tend to grant too much permission.  Be it in literall chmod permissions, excessive global variables, or the modularity of my code, I write in a far too broad fashion.  I suspect the college trained programmers in the audience are more likely to be concise than I, but I suspect (and have seen in tons of open source code) many educated individuals code like I do.  Here, there is another area where programmers and lawyers could learn together.
+Twitch recently changed the way they output audio, using HLS, making the process slightly more challenging -- a few months earlier, a handful of command line tools could have captured the audio for me.  Over four iterations on the first night of the competition, I came up with the following code for mp3 output:
 
-The need for concise language goes beyond issues of scope, as well -- speed, efficiency, and clarity can be both helped and harmed by the correct use of concise language in both realms.  But that, as they say, is a story for another day.
+     while :
+      do
+        livestreamer -a "-I 'dummy' {filename} --sout-shout-mp3 --sout '#transcode{{vcodec=dummy,acodec=mp3,ab=32,channels=1}}:std{{access=shout,mux=raw,dst=source:PASSWORD@dotaaudio.com:8000/DotaPod1Mp3}}' 'vlc://quit'" twitch.tv/dota2ti_pod_1 worst
+      sleep 30
+    done
+
+And for ogg:
+
+    while :
+      do
+        livestreamer -a "-I 'dummy' {filename} --sout '#transcode{{vcodec=dummy,acodec=vorb,ab=48,channels=1}}:std{{access=shout,mux=ogg,dst=source:PASSWORD@dotaaudio.com:8000/DotaPod1Ogg}}' 'vlc://quit'" twitch.tv/dota2ti_pod_1 worst
+        sleep 30
+    done
+
+I had a series of these scripts, each in their own file, all called by a master script:
+
+      pkill -f stream
+      pkill -f vlc
+      sleep 5
+      sh streammultiogg-0.4.sh &
+      sh streammultimp3-0.4.sh &
+      sh streamhqmp3-0.4.sh &
+      sh streamhqogg-0.4.sh &
+      sh streamnoobmp3-0.4.sh &
+      sh streamnoobogg-0.4.sh &
+
+
+This allowed me to send every stream out to the server, without too much effort.  Still, it was far from optimal.  I was essentially doubling the incoming bandwidth unnecessarily.  But I was far below any bandwidth caps, and I ran out of time optimizing.
+
+### Success
+
+The site went over better than I could have expected.  At least 13,500 people visited the site, with demand topping out at 1,000 concurrent listeners during the grand finals.  The Heroku instance had no problem managing the load, and the $20 [DigitalOcean](https://www.digitalocean.com/) VPS handled the stress of 1,000 listners without hitting 50% cpu usage as well. (This was by far my biggest concern.)
+
+I learnt a lot this July.  I learned a lot about the terminal, and VLC's transcoding options.  I found out that IceCast can handle streaming quite a bit -- especially for a program which seems to have seen no significant improvements in years.  Finally,  I remembered that when you do something nice for people, they do appreciate it.  I didn't make any money, but most of the costs -- the domain name, and hosting -- were paid for by a few generous donors.  I also received a great deal of thanks, which was awesome.
+
+[DA]: http://www.dotaaudio.com
+[DOTA]: http://www.dota.com
+[AGR]: http://www.alphageekradio.com/
+[MIXLR]: http://mixlr.com/
+[HEROKU]: http://www.heroku.com/
