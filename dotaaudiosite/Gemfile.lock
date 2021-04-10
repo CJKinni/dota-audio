@@ -4,7 +4,7 @@ GEM
     heroku-deflater (0.5.3)
       rack (>= 1.4.5)
     newrelic_rpm (3.9.0.229)
-    rack (1.5.2)
+    rack (2.1.4)
 
 PLATFORMS
   ruby
